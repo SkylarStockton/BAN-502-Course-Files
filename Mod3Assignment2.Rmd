@@ -1,0 +1,45 @@
+---
+title: "Module 3 - Assignment 2"
+author: "Stockton, Skylar"
+output: word_document
+---
+
+```{r}
+# Import the required libraries
+library(tidyverse)
+library(lubridate)
+library(tidymodels)
+
+# Read the data
+bike <- read.csv("bike_cleaned-4.csv")
+bike$dteday <- ymd(bike$dteday) # convert 'dteday' to a date
+bike$hr <- as.factor(bike$hr) # convert 'hr' to a factor
+
+# to convert other character variables to factors
+bike[, sapply(bike, is.character)] <- lapply(bike[, sapply(bike, is.character)], as.factor)
+
+# Split data into training and test set
+set.seed(1234)
+train_test_split <- initial_split(bike, prop = 0.7, strata = "count")
+train_set <- training(train_test_split)
+test_set <- testing(train_test_split)
+# Q1: count rows of training set:
+nrow(train_set)
+
+# Q3: build linear regression model
+fit <- lm(count ~ season + mnth + hr + holiday + weekday + temp + weathersit, data = train_set)
+# compute adjusted R-squared value 
+summary(fit)$adj.r.squared
+
+# Q4: make predictions on the training set
+predict_train <- predict(fit, newdata = train_set)
+# develop a histogram of the predictions
+ggplot() + geom_histogram(aes(x = predict_train), bins = 30)
+
+# Q5: determine performance on test set
+predict_test <- predict(fit, newdata = test_set)
+RSS <- sum((test_set$count - predict_test)^2)
+TSS <- sum((test_set$count - mean(test_set$count))^2)
+R_squared_test <- 1 - (RSS/TSS)
+R_squared_test
+```
