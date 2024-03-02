@@ -1,0 +1,117 @@
+---
+title: "Module 2 - Assignment 1"
+author: "Stockton, Skylar"
+output: word_document
+---
+
+Since I can't actually run R code in here, below is the code you would use for each question and a description of how to answer each:
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(GGally)
+library(lmtest)
+
+air = airquality
+```
+
+Question 1: 
+```{r}
+nrow(air)
+```
+Answer: Number of rows in the console output.
+
+Question 2: 
+```{r}
+ncol(air)
+```
+Answer: Number of columns in the console output.
+
+Question 3: 
+```{r}
+any(is.na(air$Ozone)) # True if yes, False if no
+```
+
+Question 4: This would depend on the context of the study/question but generally, one might choose "Ozone" because it's a factor that is often studied in terms of its relationship with other atmospheric qualities. 
+
+```{r}
+air2 = air %>% drop_na()
+```
+
+Question 5: 
+```{r}
+nrow(air2)
+```
+Answer: Number of rows in the console output.
+
+Question 6: 
+```{r}
+ncol(air2)
+```
+Answer: Number of columns in the console output.
+
+Question 7: 
+```{r}
+ggpairs(air2) 
+ggcorr(air2,label = TRUE)
+```
+
+Answer: The variable with the highest absolute correlation to "Ozone".
+
+Question 8:
+
+Answer: The variable with the lowest absolute correlation to "Ozone".
+
+Question 9: 
+```{r}
+ggplot(air2) + geom_point(aes(x = Temp, y = Ozone))
+```
+Answer: The graphical output should give you a hint about the nature of the relationship.
+
+Question 10:
+```{r}
+lmFit <- linear_reg() %>% 
+    set_engine("lm") %>% 
+    fit(Ozone ~ Temp, data = air2)
+
+lmFit$fit$coefficients["Temp"]
+```
+Answer: The value of the slope coefficient in the output.
+
+Question 11:
+```{r}
+summary(lmFit$fit)$r.squared
+```
+Answer: R-squared value in the output.
+
+Question 12: You would check the p-value for the Temp variable in the model.
+```{r}
+summary(lmFit$fit)$coefficients["Temp", "Pr(>|t|)"] < 0.05
+```
+If result is TRUE, then Temp is statistically significant.
+
+Question 13:
+```{r}
+confint(lmFit$fit)
+```
+If the lower and upper bounds for Temp do not contain zero, then it's TRUE otherwise FALSE.
+
+Question 14:
+```{r}
+predict(lmFit, new_data = data.frame(Temp = 80))
+```
+Answer: Extraction of the predicted "Ozone" value.
+
+Question 15:
+
+Code: Generate residuals plots to review the assumptions of linear regression (e.g., normality of errors, equal variance, independence of errors). 
+
+```{r}
+plot(lmFit$fit$residuals ~ air2$Temp)
+abline(h = 0, col = "red") #for zero line
+hist(lmFit$fit$residuals)
+qqnorm(lmFit$fit$residuals)
+qqline(lmFit$fit$residuals)
+```
+
+Answer: Graphical review of model assumptions for any obvious violations.
