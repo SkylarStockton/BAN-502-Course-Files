@@ -1,0 +1,81 @@
+---
+title: "Module 1 - Assignment 1"
+author: "Stockton, Skylar"
+output: word_document
+---
+
+```{r}
+library(tidyverse)
+library(esquisse)
+```
+
+## Question 1:
+
+```{r}
+diamonddata = diamonds
+dim(diamonddata)[1]
+```
+
+## Question 2:
+
+```{r}
+dim(diamonddata)[2]
+```
+
+## Question 3:
+
+```{r}
+ggplot(diamonddata, aes(x = carat, y = price)) + geom_point()
+```
+
+## Question 4:
+
+```{r}
+ggplot(diamonddata, aes(x = carat, y = price, color = cut)) + geom_point()
+```
+
+## Question 5:
+
+```{r}
+ggplot(diamonddata, aes(x = carat, y = price, color = cut)) + geom_point() +
+facet_grid(. ~ color)
+```
+
+## Question 6:
+
+```{r}
+inventory <- read_csv("InventoryData.csv")
+class(inventory$Supplier)
+```
+
+## Question 7:
+
+```{r}
+mean(inventory$`On Hand`, na.rm = TRUE)
+```
+
+## Question 8:
+
+```{r}
+inventoryA <- inventory %>%
+  filter(Supplier == "A")
+nrow(inventoryA)
+```
+
+## Question 9:
+
+```{r}
+inventoryA <- inventoryA %>% mutate(OnHandRatio = `On Hand`/`Annual Demand`)
+```
+
+## Question 10:
+
+```{r}
+avg_cost <- inventoryA %>% 
+  group_by(`Item SKU`) %>% 
+  summarise(SKUAvgCost = mean(`Cost per Unit ($)`))
+```
+
+```{r}
+avg_cost$SKUAvgCost[avg_cost$`Item SKU` == "011"]
+```
