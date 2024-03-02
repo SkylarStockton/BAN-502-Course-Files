@@ -1,0 +1,81 @@
+---
+title: "Module 4 - Assignment 2"
+author: "Stockton, Skylar"
+output: word_document
+---
+# Module 4 - Assignment 2
+
+## Stockton, Skylar
+
+### Data Cleansing
+
+```{r}
+library(tidyverse)
+library(readxl)
+CustomerChurn <- read_excel("CustomerChurn.xlsx")
+```
+
+#### Cleaning Missing Data
+
+```{r}
+view(CustomerChurn)
+```
+
+
+```{r}
+summary(CustomerChurn)
+```
+
+
+```{r}
+# replace missing values in 'MonthlyCharges'
+CustomerChurn2 <- mutate(CustomerChurn, MonthlyCharges = replace(MonthlyCharges, MonthlyCharges == "NaN", median(MonthlyCharges, na.rm = TRUE)))
+```
+
+
+```{r}
+# replace missing values in 'TotalCharges'
+CustomerChurn2$TotalCharges <- as.numeric(CustomerChurn2$TotalCharges)
+CustomerChurn2 <- mutate(CustomerChurn2, TotalCharges = replace(TotalCharges, TotalCharges == "--", NA))
+CustomerChurn2 <- mutate(CustomerChurn2, TotalCharges = replace(TotalCharges, is.na(TotalCharges), mean(TotalCharges, na.rm = TRUE)))
+```
+
+
+```{r}
+# replace missing values in 'PaymentMethod'
+CustomerChurn2 <- mutate(CustomerChurn2, PaymentMethod = replace(PaymentMethod, is.na(PaymentMethod), "ElectronicCheck"))
+```
+
+
+```{r}
+# Creating a new dataframe called CustomerChurn3
+CustomerChurn3 <- select(CustomerChurn2, PaymentMethod, MonthlyCharges, TotalCharges)
+
+#Printing the new dataframe
+print(CustomerChurn3)
+```
+
+
+```{r}
+# add this line of code after creating 'CustomerChurn3'
+boxplot(CustomerChurn$tenure)
+```
+
+```{r}
+# add this line of code after the boxplot
+boxplot(CustomerChurn$tenure)$out
+```
+
+
+```{r}
+# To identify the rows with outliers
+outliers <- boxplot(CustomerChurn$tenure)$out
+CustomerChurn[which(CustomerChurn$tenure %in% outliers),]
+```
+
+
+```{r}
+# To remove outliers
+CustomerChurn <- CustomerChurn[-which(CustomerChurn$tenure %in% outliers),]
+boxplot(CustomerChurn$tenure)
+```
