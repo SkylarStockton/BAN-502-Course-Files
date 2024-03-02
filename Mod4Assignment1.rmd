@@ -1,0 +1,136 @@
+---
+title: "Module 4 - Assignment 1"
+author: "Stockton, Skylar"
+output: word_document
+---
+# Module 4 - Assignment 1
+
+## Stockton, Skylar
+
+### Data Transformation
+
+```{r}
+library(tidyverse)
+state_income <- read_csv("state_income.csv")
+```
+
+#### State Incomes
+
+First, I will open the dataset and look at all the columns to identify which ones are helpful for our analysis. Then, I will create a subset of this dataset using only the relevant columns. The variables I will use include `State_Name`, `State_ab`, `County`, `City`, `Type`, `ALand`, `Mean`, `Median`, and `Stdev`.
+
+```{r}
+library(dplyr)
+
+# Selecting required columns
+state_income2 <- state_income %>% 
+                 select(State_ab, State_Name, County, City, Type, ALand, Mean, Median, Stdev)
+                 
+# Displaying the first 10 rows
+head(state_income2, 10)
+```
+
+After selecting the required columns, we are left with a dataset (`state_income2`) that is easier to work with.
+
+Next, I will rename some variables to make them more understandable.
+
+```{r}
+# Renaming columns
+state_income2 <- rename(state_income2, 
+                        SquareArea = ALand, 
+                        IncomeMean = Mean,
+                        IncomeMedian = Median, 
+                        IncomeStDev = Stdev)
+
+# Displaying the first 10 rows
+head(state_income2, 10)
+```
+
+The column names have been renamed in `state_income2` for better clarity. 
+
+Finally, I will filter the data for North Carolina only.
+
+```{r}
+# Filtering North Carolina data
+NC_income <- state_income2 %>% filter(State_ab == "NC")
+
+# Displaying the first 10 rows
+head(NC_income, 10)
+```
+
+This gives us a subset of the data (`NC_income`) that only contains information about the incomes in North Carolina.
+
+#### NC Incomes
+
+For this part, we will be working with the `NC_income` dataset to perform some exploratory data analysis and create summaries of incomes within various divisions in North Carolina - all by county, city, and type.
+
+```{r}
+# Arrange dataset by County
+NC_income <- arrange(NC_income, County)
+
+# Displaying the first 10 rows of arranged NC_income
+head(NC_income, 10)
+```
+
+The dataset is now sorted in ascending order by County. Next, we will use the `group_by` and `summarise` commands to create summaries of the data.
+
+```{r}
+# summarizing NC_income by County
+summary1 <- group_by(NC_income, County) %>% summarise(mean = mean(IncomeMean))
+
+# summarizing NC_income by City
+summary2 <- NC_income %>% group_by(City) %>% summarise(mean = mean(IncomeMean))
+```
+
+In these codes, we created two new datasets `summary1` and `summary2`. Both datasets were created by summarizing the `NC_income` dataset; `summary1` grouped the data by `County` and `summary2` grouped it by `City`. Then, they summarize each group by `IncomeMean`.
+
+`summary1` lists each `County` in North Carolina, with the mean income for that county. `summary2`, on the other hand, lists each `City`, along with the corresponding mean income.
+
+Now, we will go ahead and create a comment that summarizes the `NC_income` dataset by `Type` of property.
+
+```{r}
+# summarizing NC_income by type
+summary3 <- NC_income %>% group_by(Type) %>% summarise(mean = mean(IncomeMean))
+
+# Displaying the summary3
+summary3
+```
+
+`summary3` is another new dataset that we have created by grouping the `NC_income` dataset by `Type` of property and then displaying the mean income for each type of property.
+
+#### Income Visualization
+
+Now we will create some visualizations using the `ggplot2` library in R.
+
+```{r}
+# Loading ggplot library
+library(ggplot2)
+
+# Create scatterplot for County income data
+ggplot(summary1, aes(x=County, y=mean)) +
+  geom_point() + 
+  labs(x='County', y='Income') + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+From the plot, we see that the counties with the highest and lowest average incomes are *Wake* and *Stokes* respectively. The county with the second lowest income is *Surry*.
+
+Next, we will create a new dataset `AvgStateIncome` by grouping the original dataset `state_income2` by `State_ab` and then summarizing using the mean of `IncomeMean`.
+
+```{r}
+# summarizing state_income2 by State_ab
+AvgStateIncome <- state_income2 %>% group_by(State_ab) %>% summarise(mean = mean(IncomeMean))
+
+# Filtering states that have an 'N' in the abbreviation
+AvgStateIncome <- filter(AvgStateIncome, grepl("N", State_ab))
+```
+
+Now, we will create a scatterplot using the `AvgStateIncome` dataset.
+
+```{r}
+# Create scatterplot
+ggplot(AvgStateIncome, aes(x=State_ab, y=mean)) +
+  geom_point() +  
+  labs(title="Average State Incomes", x="State", y="Mean Income")
+```
+
+The scatterplot shows us the each state that has an "N" in the abbreviation along with its average income. The state with the highest average income is *New Jersey* while the state with the lowest average income is *Tennessee*.
