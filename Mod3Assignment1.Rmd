@@ -1,0 +1,128 @@
+---
+title: "Module 3 - Assignment 2"
+author: "Stockton, Skylar"
+output: word_document
+---
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(e1071)
+library(ROCR)
+
+# Load the data
+parole <- read.csv("parole.csv", stringsAsFactors = T)
+
+# Convert to factors
+parole$male <- as.factor(parole$male)
+parole$race <- as.factor(parole$race)
+parole$state <- as.factor(parole$state)
+parole$crime <- as.factor(parole$crime)
+parole$multiple.offenses <- as.factor(parole$multiple.offenses)
+parole$violator <- as.factor(parole$violator)
+
+#Recoding the levels
+levels(parole$male) <- c("F", "M")
+levels(parole$race) <- c("white", "black")
+levels(parole$state) <- c("Other", "KY", "LA", "VA")
+levels(parole$multiple.offenses) <- c("No", "Yes")
+levels(parole$violator) <- c("No", "Yes")
+```
+
+```{r}
+# Question 1
+table(parole$violator)
+```
+
+```{r}
+# Question 2
+set.seed(12345)
+split <- initial_split(parole, prop = 0.7, strata = "violator")
+train <- training(split)
+test <- testing(split)
+
+train <- train %>% mutate(violator = fct_relevel(violator, c("No","Yes")))
+```
+
+```{r}
+# Questions 3, 4, 5
+# This needs to be a manual task of drawing graphs and visualizing, which isn't possible in this case.
+```
+
+```{r}
+# Question 6
+model1 <- glm(violator ~ state, data = train, family = binomial)
+summary(model1)
+```
+```{r}
+log_model <- glm(violator ~ state, data = train, family = "binomial")
+summary(log_model)
+```
+
+For question 7, you would check the AIC of the model:
+
+```{r}
+AIC(log_model)
+```
+
+For question 8, you would build another model and examine the summary.
+
+```{r}
+log_model2 <- glm(violator ~ state + multiple.offenses + race, data = train, family = "binomial")
+summary(log_model2)
+```
+
+For other questions, you should predict the probabilities, create a ROC curve, calculate the AUC, and determine the best threshold.
+
+```{r}
+probabilities <- predict(log_model2, newdata = test, type = "response")
+pred <- prediction(probabilities, test$violator)
+perf <- performance(pred, "tpr", "fpr")
+plot(perf)
+auc <- performance(pred, measure = "auc")
+auc@y.values[[1]]
+```
+```{r}
+new_parolee <- data.frame(state = c("LA"), multiple.offenses = c("Yes"), race = c("white"))
+prob <- predict(log_model2, newdata = new_parolee, type = "response")
+round(as.numeric(prob), 2)
+```
+
+```{r}
+# Q10: Develop ROC curve and identify optimal threshold
+prob <- predict(log_model2, type = "response")
+pred <- prediction(prob, train$violator)
+roc <- performance(pred, measure = "tpr", x.measure = "fpr")
+plot(roc, main = "ROC Curve")
+
+# Identify optimal threshold
+perf <- performance(pred, measure = "sens", x.measure = "spec")
+opt_index <- which.max(perf@y.values[[1]] + perf@x.values[[1]])
+opt_threshold <- perf@alpha.values[[1]][opt_index]
+print(paste0("Optimal threshold: ", round(opt_threshold, 4)))  # Here we rounded off to 4 decimal places.
+
+# Q11: Compute model accuracy with optimal threshold 
+pred_values <- ifelse(prob > opt_threshold, "Yes", "No")
+accuracy <- sum(pred_values == train$violator) / nrow(train)
+print(paste0("Accuracy: ", round(accuracy, 3)))
+
+# Q12: Compute model sensitivity 
+table <- table(Predicted = pred_values, Actual = train$violator)
+print(paste0("Sensitivity: ", round(table[2,2] / sum(table[,2]), 3)))
+
+# Q13: Identify threshold for best accuracy 
+accuracy_vec <- c()
+thresholds <- seq(0, 1, 0.1)
+for(th in thresholds){
+   pred_values <- ifelse(prob > th, "Yes", "No")
+   accuracy_vec <- c(accuracy_vec, sum(pred_values == train$violator) / nrow(train))
+}
+best_th <- thresholds[which.max(accuracy_vec)]
+print(paste0("Threshold for best accuracy: ", best_th))
+
+# Q14: Compute model accuracy on test set 
+test_prob <- predict(log_model2, newdata = test, type = "response")
+test_pred_values <- ifelse(test_prob > best_th, "Yes", "No")
+test_accuracy <- sum(test_pred_values == test$violator) / nrow(test)
+print(paste0("Test set accuracy: ", round(test_accuracy, 3)))
+```
