@@ -1,0 +1,51 @@
+---
+title: "Module 6 - Assignment 1"
+author: "Stockton, Skylar"
+output: word_document
+---
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(e1071)
+library(ROCR)
+
+trucks_1 <- read_csv("trucks-1.csv")
+View(trucks_1)
+```
+
+```{r}
+ggplot(trucks_1) +
+  geom_point(aes(Distance, Speeding))
+```
+
+```{r}
+trucks_1 = trucks_1 %>% select(-Driver_ID)
+trucks_cleaned = scale(trucks_1)
+summary(trucks_cleaned)
+```
+```{r}
+set.seed(64)
+kclust = kmeans(trucks_cleaned, centers = 2) #run k-means clustering with k = 3
+kclust
+
+points = augment(kclust, trucks_cleaned)
+points
+
+```
+```{r}
+ggplot(points, aes(x = Distance, y = Speeding, color = .cluster)) +
+  geom_point()
+```
+```{r}
+set.seed(412)
+kclust = kmeans(trucks_cleaned, centers = 8) #run k-means clustering with k = 3
+kclust
+
+points = augment(kclust, trucks_cleaned)
+points
+
+ggplot(points, aes(x = Distance, y = Speeding, color = .cluster)) +
+  geom_point()
+
+```
+
