@@ -1,0 +1,116 @@
+---
+title: "Module 2 - Assignment 2"
+author: "Stockton, Skylar"
+output: word_document
+---
+
+```{r}
+# install all necessary libraries if not installed at once like so
+# install.packages(c("tidyverse", "tidymodels", "glmnet", "GGally", "ggcorrplot", "MASS", "car", "lubridate", "lmtest", "splines"))
+
+# load libraries
+library(tidyverse)
+library(tidymodels)
+library(glmnet)
+library(GGally)
+library(corrplot)
+library(MASS)
+library(car)
+library(lubridate)
+library(lmtest)
+library(splines)
+
+# load data
+bike <- read.csv("bike_cleaned.csv") # adjust as necessary
+
+# Mutations
+bike = bike %>% mutate(dteday = mdy(dteday))
+bike = bike %>% mutate_if(is.character, as_factor)
+bike = bike %>% mutate(hr = as_factor(hr))
+```
+
+Question 1:
+```{r}
+corr_data <- bike[, sapply(bike, is.numeric)] %>% dplyr::select(-c(instant,casual,registered)) # removing columns
+corrplot(cor(corr_data), type = "upper", method = "number", order = "alphabet", 
+         tl.col = "black")
+```
+Answer: Variable with the highest absolute correlation to "count".
+
+Question 2:
+```{r}
+ggplot(bike, aes(x=factor(season), y=count)) + geom_boxplot()
+```
+Answer: Season with the highest median in box plot.
+
+Question 3:
+```{r}
+lm_hr <- linear_reg() %>% 
+    set_engine("lm") %>% 
+    fit(count ~ hr, data = bike)
+summary(lm_hr$fit)
+```
+Answer: (24 levels of hour -1) = 23 Dummy variables 
+
+Question 4:
+Answer: The one without a coefficient.
+
+Question 5:
+```{r}
+min_hr <- summary(lm_hr$fit)$coefficients[which.min(summary(lm_hr$fit)$coefficients[,1]),]
+names(min_hr)
+```
+Answer: Hour with the lowest coefficient value.
+
+Question 6:
+```{r}
+ggplot(bike, aes(x=temp, y=count)) + geom_point()
+```
+Answer: The graphical output should give you a hint.
+
+Question 7:
+```{r}
+lm_hr_temp <- linear_reg() %>% 
+    set_engine("lm") %>% 
+    fit(count ~ hr + temp, data = bike)
+summary(lm_hr_temp$fit)$coefficients
+```
+Answer: Value of the coefficient for "hr23".
+
+Question 8:
+```{r}
+summary(lm_hr_temp$fit)$adj.r.squared
+```
+Answer: R-squared adjusted value.
+
+Question 9:
+```{r}
+lm_temp_atemp <- linear_reg() %>% 
+    set_engine("lm") %>% 
+    fit(count ~ temp + atemp, data = bike)
+summary(lm_temp_atemp$fit)$coefficients
+summary(lm_temp_atemp$fit)$adj.r.squared
+```
+Answer: R-squared adjusted value.
+
+Question 10:
+Answer: Those with p-value < 0.05 are significant.
+
+Question 11:
+Answer: C. Multicollinearity
+
+Question 12:
+```{r}
+allmod <- lm(count ~ season + mnth + hr + holiday + weekday + workingday + weathersit + temp + atemp + hum + windspeed, data = bike)
+summary(allmod)
+```
+Answer: B. weekday and holiday
+
+Question 13:
+```{r}
+# backward stepwise regression
+library(MASS)
+step <- stepAIC(allmod, direction = "backward")
+summary(step)
+```
+Answer: Variable with the highest p-value which is also above 0.05. This will depend on the results of your analysis.
